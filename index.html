@@ -1,0 +1,822 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+<title>Memory Bank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&amp;display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f6f4; --surface:#ffffff; --surface2:#eef1ee; --ink:#18211c; --muted:#5c6b62; --faint:#8a978f;
+    --line:#dde3dd; --accent:#0e6b5e; --accent-ink:#ffffff; --accent-soft:#e0efeb;
+    --terra:#b4532a; --terra-soft:#f7e8e0; --mustard:#9a6b12; --mustard-soft:#f5ecd2;
+    --blue:#2f5d8a; --blue-soft:#e2ebf4; --sage:#4a6741; --sage-soft:#e6ede1;
+    --plum:#6d4a5e; --plum-soft:#f0e6ec; --red:#b42318; --red-soft:#fdecea;
+    --radius:14px; --radius-s:9px;
+    --shadow:0 1px 3px rgba(24,33,28,.07),0 8px 24px rgba(24,33,28,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#121614; --surface:#1b211e; --surface2:#232a27; --ink:#e9efeb; --muted:#a7b5ac; --faint:#7d8c83;
+      --line:#2e3833; --accent:#3dbfa8; --accent-ink:#0c1a17; --accent-soft:#1d3530;
+      --terra:#e08a63; --terra-soft:#3a2720; --mustard:#d9b45c; --mustard-soft:#38301c;
+      --blue:#8ab4dd; --blue-soft:#22303f; --sage:#9dc08f; --sage-soft:#27331f;
+      --plum:#c99ab2; --plum-soft:#35262e; --red:#f08a80; --red-soft:#3d2321;
+      --shadow:0 1px 3px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Manrope",system-ui,sans-serif;font-size:15.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit;font-size:15px;color:var(--ink)}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px 64px}
+  .mono{font-family:"IBM Plex Mono",monospace}
+
+  /* Top bar */
+  .topbar{position:sticky;top:0;z-index:40;background:var(--bg);border-bottom:1px solid var(--line)}
+  .topbar-in{max-width:1120px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;letter-spacing:-.01em}
+  .brand-mark{width:32px;height:32px;border-radius:8px;background:var(--accent);display:grid;place-items:center;flex:none}
+  .brand-mark svg{width:18px;height:18px;stroke:var(--accent-ink)}
+  .v1badge{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;background:var(--accent-soft);color:var(--accent);padding:3px 8px;border-radius:99px;letter-spacing:.04em}
+  .oss-badge{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;border:1px solid var(--line);color:var(--muted);padding:3px 8px;border-radius:99px}
+  .topnav{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+  .topnav a{color:var(--muted);font-weight:600;font-size:13.5px;padding:7px 11px;border-radius:8px}
+  .topnav a:hover{background:var(--surface2);color:var(--ink);text-decoration:none}
+
+  /* Hero strip */
+  .hero{padding:34px 0 8px;display:grid;grid-template-columns:1.5fr .9fr;gap:28px;align-items:start}
+  .hero h1{font-family:"Source Serif 4",serif;font-size:clamp(30px,4.6vw,44px);line-height:1.08;margin:0 0 12px;font-weight:700;letter-spacing:-.015em}
+  .hero p.lede{color:var(--muted);font-size:16.5px;margin:0;max-width:56ch}
+  .hero p.lede strong{color:var(--ink)}
+  .demo-note{margin-top:16px;display:flex;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-s);padding:12px 14px;font-size:13.5px;color:var(--muted);max-width:60ch}
+  .demo-note svg{width:18px;height:18px;flex:none;stroke:var(--accent);margin-top:1px}
+  .demo-note strong{color:var(--ink)}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  .stat .num{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .stat .lbl{font-size:12.5px;color:var(--muted);font-weight:600;margin-top:6px}
+  .stat .sub{font-size:12px;color:var(--faint);margin-top:2px}
+
+  /* Architecture flow */
+  .flow{display:flex;align-items:stretch;gap:0;margin:26px 0 6px;flex-wrap:wrap}
+  .flow-step{flex:1;min-width:140px;background:var(--surface);border:1px solid var(--line);padding:13px 15px;position:relative}
+  .flow-step:first-child{border-radius:var(--radius) 0 0 var(--radius)}
+  .flow-step:last-child{border-radius:0 var(--radius) var(--radius) 0}
+  .flow-step + .flow-step{border-left:none}
+  .flow-step .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.09em;color:var(--faint);font-weight:600}
+  .flow-step .t{font-weight:800;font-size:14.5px;margin-top:2px}
+  .flow-step .d{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.45}
+  .flow-arrow{align-self:center;padding:0 2px;color:var(--faint);font-weight:800}
+
+  section{margin-top:42px}
+  .sec-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .sec-head h2{font-family:"Source Serif 4",serif;font-size:26px;margin:0;font-weight:700;letter-spacing:-.01em}
+  .sec-head .n{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--accent);font-weight:600}
+  .sec-sub{color:var(--muted);margin:0 0 18px;max-width:72ch;font-size:14.5px}
+
+  .grid-2{display:grid;grid-template-columns:1.65fr 1fr;gap:20px;align-items:start}
+
+  /* Filters */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);font-weight:700;font-size:13px;padding:7px 13px;border-radius:99px}
+  .chip:hover{border-color:var(--accent);color:var(--ink)}
+  .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+  .search{flex:1;min-width:170px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:7px 14px}
+  .search svg{width:16px;height:16px;stroke:var(--faint);flex:none}
+  .search input{border:none;background:none;outline:none;width:100%;font-size:14px}
+  .search input::placeholder{color:var(--faint)}
+
+  /* Memory cards */
+  .mem-list{display:flex;flex-direction:column;gap:10px}
+  .mem{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 17px;box-shadow:var(--shadow)}
+  .mem-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:7px}
+  .pill{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:99px}
+  .pill.work{background:var(--sage-soft);color:var(--sage)}
+  .pill.finance{background:var(--mustard-soft);color:var(--mustard)}
+  .pill.family{background:var(--terra-soft);color:var(--terra)}
+  .pill.health{background:var(--blue-soft);color:var(--blue)}
+  .pill.ideas{background:var(--plum-soft);color:var(--plum)}
+  .mem-type{font-size:11.5px;color:var(--faint);font-weight:700}
+  .mem-conf{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted)}
+  .mem-text{font-weight:600;font-size:15.5px;line-height:1.45}
+  .mem-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:var(--muted)}
+  .mem-meta span{display:inline-flex;align-items:center;gap:5px}
+  .mem-meta svg{width:13px;height:13px;stroke:var(--faint)}
+  .empty-box{background:var(--surface);border:1px dashed var(--line);border-radius:var(--radius);padding:28px;text-align:center;color:var(--muted)}
+
+  /* Side cards */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 4px;font-size:16px;font-weight:800}
+  .card .card-sub{font-size:13px;color:var(--muted);margin:0 0 14px}
+  .side-stack{display:flex;flex-direction:column;gap:20px}
+  .source{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+  .source:first-of-type{border-top:none;padding-top:2px}
+  .src-ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;flex:none}
+  .src-ic svg{width:19px;height:19px}
+  .src-ic.gmail{background:var(--terra-soft)} .src-ic.gmail svg{stroke:var(--terra)}
+  .src-ic.cal{background:var(--blue-soft)} .src-ic.cal svg{stroke:var(--blue)}
+  .src-ic.gh{background:var(--surface2)} .src-ic.gh svg{stroke:var(--ink)}
+  .source .s-name{font-weight:800;font-size:14.5px;display:flex;align-items:center;gap:8px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block}
+  .source .s-meta{font-size:12.5px;color:var(--muted)}
+  .sync-btn{margin-left:auto;align-self:flex-start;border:1px solid var(--line);background:var(--surface);border-radius:8px;font-size:12.5px;font-weight:700;padding:6px 11px;color:var(--ink);flex:none}
+  .sync-btn:hover{border-color:var(--accent);color:var(--accent)}
+  .sync-btn:disabled{opacity:.55;cursor:default}
+  .principle{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+  .principle:first-of-type{border-top:none}
+  .principle svg{width:17px;height:17px;stroke:var(--accent);flex:none;margin-top:2px}
+  .principle .p-t{font-weight:700;font-size:14px}
+  .principle .p-d{font-size:13px;color:var(--muted)}
+
+  /* Grants */
+  .grant-grid{display:grid;grid-template-columns:1fr 1.35fr;gap:20px;align-items:start}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .field input[type=text],.field select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-s);padding:10px 12px;outline:none}
+  .field input[type=text]:focus,.field select:focus{border-color:var(--accent)}
+  .scope-picks{display:flex;gap:7px;flex-wrap:wrap}
+  .pick{border:1px solid var(--line);background:var(--bg);border-radius:99px;padding:7px 13px;font-size:13px;font-weight:700;color:var(--muted)}
+  .pick.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:var(--accent-ink);border:none;border-radius:10px;padding:11px 18px;font-weight:800;font-size:14.5px}
+  .btn:hover{filter:brightness(1.07)}
+  .btn svg{width:16px;height:16px;stroke:currentColor}
+  .btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+  .btn.small{padding:8px 13px;font-size:13px;border-radius:8px}
+  .form-note{font-size:12.5px;color:var(--faint);margin-top:10px}
+  .grant-card{border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:12px;background:var(--surface)}
+  .grant-card.revoked{opacity:.55}
+  .grant-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .grant-name{font-weight:800;font-size:16px}
+  .status{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
+  .status.off{background:var(--red-soft);color:var(--red)}
+  .grant-scopes{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+  .grant-meta{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+  .grant-meta b{color:var(--ink)}
+  .revoke-btn{margin-left:auto;border:1px solid var(--line);background:none;color:var(--red);font-weight:700;font-size:13px;border-radius:8px;padding:7px 12px}
+  .revoke-btn:hover{border-color:var(--red);background:var(--red-soft)}
+  .token{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--faint);word-break:break-all;margin-top:8px}
+
+  /* Agent playground */
+  .playground{background:var(--ink);color:var(--bg);border-radius:18px;padding:26px;--pg-muted:#a9b8ae}
+  @media (prefers-color-scheme: dark){ .playground{background:#0d100f;border:1px solid var(--line);--pg-muted:#8fa198} }
+  .playground h3{margin:0;font-family:"Source Serif 4",serif;font-size:23px;font-weight:700}
+  .playground .pg-sub{color:var(--pg-muted);font-size:14px;margin:6px 0 18px;max-width:68ch}
+  .pg-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .pg-controls select{background:#232b27;color:#eef3ef;border:1px solid #3a453f;border-radius:10px;padding:10px 12px;font-size:14px;max-width:100%}
+  @media (prefers-color-scheme: dark){ .pg-controls select{background:#1b211e} }
+  .q-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .q-chip{border:1px solid #3a453f;background:transparent;color:#dfe8e1;border-radius:99px;padding:8px 14px;font-size:13.5px;font-weight:600}
+  .q-chip:hover{border-color:var(--accent);background:rgba(61,191,168,.12)}
+  .pg-ask{display:flex;gap:10px;flex-wrap:wrap}
+  .pg-ask input{flex:1;min-width:220px;background:#232b27;border:1px solid #3a453f;border-radius:10px;padding:12px 14px;color:#eef3ef;outline:none}
+  @media (prefers-color-scheme: dark){ .pg-ask input{background:#1b211e} }
+  .pg-ask input::placeholder{color:#7e8f85}
+  .pg-ask input:focus{border-color:var(--accent)}
+  .pg-result{margin-top:20px;background:rgba(255,255,255,.05);border:1px solid #3a453f;border-radius:var(--radius);padding:18px;display:none}
+  .pg-result.show{display:block}
+  .pg-verdict{display:flex;align-items:center;gap:9px;font-weight:800;font-size:14px;margin-bottom:10px;flex-wrap:wrap}
+  .verdict-dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .verdict-dot.ok{background:#3dbfa8}.verdict-dot.no{background:#e08a63}
+  .pg-answer{font-size:15px;line-height:1.6;color:#eef3ef}
+  .pg-answer ul{margin:8px 0 0;padding-left:20px}
+  .pg-answer li{margin-bottom:5px}
+  .pg-cites{margin-top:14px;border-top:1px solid #3a453f;padding-top:12px}
+  .pg-cites .c-t{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;color:var(--pg-muted);font-weight:600;margin-bottom:8px}
+  .cite{display:inline-block;font-size:12px;background:rgba(255,255,255,.07);border:1px solid #3a453f;border-radius:7px;padding:4px 9px;margin:0 6px 6px 0;color:#cfdcd2}
+  .pg-blocked{margin-top:10px;font-size:13px;color:var(--pg-muted)}
+  .scope-shield{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px;align-items:center}
+  .scope-shield .ss-lbl{font-size:12.5px;color:var(--pg-muted);font-weight:700;margin-right:2px}
+  .ss{font-size:12px;font-weight:700;border-radius:99px;padding:4px 11px;border:1px solid #3a453f;color:#7e8f85}
+  .ss.allow{border-color:#3dbfa8;color:#3dbfa8;background:rgba(61,191,168,.1)}
+
+  /* Audit */
+  .audit-list{display:flex;flex-direction:column}
+  .audit-row{display:flex;gap:14px;padding:12px 4px;border-top:1px solid var(--line);align-items:flex-start}
+  .audit-row:first-child{border-top:none}
+  .a-ic{width:32px;height:32px;border-radius:9px;background:var(--surface2);display:grid;place-items:center;flex:none}
+  .a-ic svg{width:16px;height:16px;stroke:var(--muted)}
+  .a-ic.deny{background:var(--red-soft)} .a-ic.deny svg{stroke:var(--red)}
+  .a-ic.grant{background:var(--accent-soft)} .a-ic.grant svg{stroke:var(--accent)}
+  .a-main{flex:1;min-width:0}
+  .a-text{font-size:14.5px;font-weight:600}
+  .a-text b{font-weight:800}
+  .a-meta{font-size:12.5px;color:var(--muted)}
+  .a-time{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--faint);white-space:nowrap;padding-top:4px}
+
+  /* API */
+  .api-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+  .codeblock{background:#141a17;color:#d7e3da;border-radius:var(--radius);padding:18px 20px;font-family:"IBM Plex Mono",monospace;font-size:12.8px;line-height:1.75;overflow-x:auto;white-space:pre}
+  .codeblock .cm{color:#7e9484}.codeblock .kw{color:#7fd1bd}.codeblock .st{color:#e8c97a}
+  .endpoint{display:flex;gap:10px;align-items:baseline;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+  .endpoint:first-of-type{border-top:none}
+  .method{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--accent-soft);color:var(--accent);flex:none}
+  .method.post{background:var(--mustard-soft);color:var(--mustard)}
+  .method.del{background:var(--red-soft);color:var(--red)}
+  .endpoint code{font-family:"IBM Plex Mono",monospace;font-size:13px}
+  .endpoint .e-d{color:var(--muted);font-size:13px;margin-left:auto;text-align:right}
+
+  /* Roadmap */
+  .road{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+  .road-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+  .road-card.current{border-color:var(--accent);border-width:2px}
+  .road-card .rv{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--accent)}
+  .road-card .rt{font-weight:800;font-size:15px;margin:3px 0 7px}
+  .road-card ul{margin:0;padding-left:17px;font-size:12.8px;color:var(--muted);line-height:1.55}
+  .road-card .here{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+
+  footer{margin-top:48px;border-top:1px solid var(--line);padding-top:22px;display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+  footer .f-col{flex:1;min-width:220px;font-size:13.5px;color:var(--muted)}
+  footer .f-col b{color:var(--ink);display:block;margin-bottom:5px;font-size:14px}
+  footer code{font-family:"IBM Plex Mono",monospace;font-size:12px;background:var(--surface2);padding:2px 6px;border-radius:5px}
+
+  .toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,80px);background:var(--ink);color:var(--bg);border-radius:12px;padding:13px 20px;font-weight:700;font-size:14px;box-shadow:0 12px 32px rgba(0,0,0,.25);transition:transform .3s ease;z-index:99;max-width:calc(100vw - 40px);text-align:center}
+  .toast.show{transform:translate(-50%,0)}
+
+  @media (max-width:900px){
+    .hero{grid-template-columns:1fr}
+    .grid-2,.grant-grid,.api-grid{grid-template-columns:1fr}
+    .road{grid-template-columns:1fr 1fr}
+    .flow-step{min-width:calc(50% - 2px);border-radius:0 !important;border-left:1px solid var(--line) !important;margin-bottom:8px}
+  }
+  @media (max-width:560px){
+    .road{grid-template-columns:1fr}
+    .stats{grid-template-columns:1fr 1fr}
+    .topnav{display:none}
+    .oss-badge{display:none}
+    .brand{font-size:16px}
+    .v1badge{white-space:nowrap}
+    .playground{padding:20px 16px}
+    .endpoint .e-d{display:none}
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto} .toast{transition:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"></ellipse><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"></path><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"></path></svg></span>
+      Memory Bank
+      <span class="v1badge">V1 · INTERACTIVE PROTOTYPE</span>
+      <span class="oss-badge">SINGLE-FILE TEST BUILD</span>
+    </div>
+    <nav class="topnav">
+      <a href="#vault">Vault</a>
+      <a href="#grants">Grants</a>
+      <a href="#agent">Test an agent</a>
+      <a href="#audit">Audit log</a>
+      <a href="#api">API &amp; MCP</a>
+      <a href="#roadmap">Roadmap</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- HERO / OVERVIEW -->
+  <div class="hero">
+    <div>
+      <h1>Your memory. Your vault.<br>Agents ask — you allow.</h1>
+      <p class="lede">The design in one line: one bank for everything your AI agents need to know about you. Memories flow in continuously from the tools you already use, get distilled into facts with sources, and leave only through <strong>scoped, expiring, revocable grants</strong> — never as a raw dump. This page is the clickable V1 proof of that loop; live account connectors are the next build step.</p>
+      <div class="demo-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+        <div><strong>How to test this V1:</strong> the vault below holds demo data for a sample user, “Alex.” Filter it, create a grant, then use the agent console to ask questions — and watch out-of-scope questions get nothing. Try revoking a grant and asking again.</div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="num" id="stat-mem">14</div><div class="lbl">Memories in vault</div><div class="sub">distilled, with provenance</div></div>
+      <div class="stat"><div class="num">3</div><div class="lbl">Demo sources (simulated)</div><div class="sub">Gmail · Calendar · GitHub</div></div>
+      <div class="stat"><div class="num" id="stat-grants">2</div><div class="lbl">Active grants</div><div class="sub">scoped &amp; revocable</div></div>
+      <div class="stat"><div class="num" id="stat-reads">0</div><div class="lbl">Agent reads this session</div><div class="sub">every one is logged below</div></div>
+    </div>
+  </div>
+
+  <!-- FLOW -->
+  <div class="flow" aria-label="How Memory Bank works">
+    <div class="flow-step"><div class="k">STEP 1</div><div class="t">Capture</div><div class="d">Connectors subscribe to changes — new mail, events, commits land within minutes.</div></div>
+    <div class="flow-step"><div class="k">STEP 2</div><div class="t">Distill</div><div class="d">Raw events become facts, episodes &amp; preferences — tagged by topic, linked to source.</div></div>
+    <div class="flow-step"><div class="k">STEP 3</div><div class="t">Grant</div><div class="d">You approve a scope: which topics, summary or verbatim, for how long.</div></div>
+    <div class="flow-step"><div class="k">STEP 4</div><div class="t">Gatekeep</div><div class="d">Filtering happens inside the vault at query time. Denied looks identical to “nothing found.”</div></div>
+    <div class="flow-step"><div class="k">STEP 5</div><div class="t">Audit</div><div class="d">Every read is logged — who saw what, when, under which grant. Revoke anytime.</div></div>
+  </div>
+
+  <!-- VAULT -->
+  <section id="vault">
+    <div class="sec-head"><span class="n">01</span><h2>The vault</h2></div>
+    <p class="sec-sub">A day in Alex’s life, captured from three sources and distilled. Each memory carries its topic, type, source, and confidence — the raw email, event, or commit stays behind the link, not in the memory.</p>
+    <div class="filters" style="margin-top:-6px">
+      <button class="btn ghost small" id="vault-export" type="button">Export vault (JSON)</button>
+      <button class="btn ghost small" id="vault-reset" type="button">Reset demo</button>
+      <span class="sec-sub" id="persist-note" style="margin:0;font-size:13px"></span>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="filters" role="group" aria-label="Filter memories by topic">
+          <button class="chip on" data-filter="all">All topics</button>
+          <button class="chip" data-filter="Work">Work</button>
+          <button class="chip" data-filter="Finance">Finance</button>
+          <button class="chip" data-filter="Family">Family</button>
+          <button class="chip" data-filter="Health">Health</button>
+          <button class="chip" data-filter="Ideas">Ideas</button>
+          <label class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m21 21-4.3-4.3"></path></svg>
+            <input type="search" id="mem-search" placeholder="Search memories…" aria-label="Search memories">
+          </label>
+        </div>
+        <div class="mem-list" id="mem-list"></div>
+        <div class="empty-box" id="mem-empty" style="display:none">No memories match that filter. In the real vault this is also exactly what an out-of-scope agent sees — nothing.</div>
+      </div>
+
+      <div class="side-stack">
+        <div class="card">
+          <h3>Capture sources — design</h3>
+          <p class="card-sub">In the live build: sync, not import — each connector watches for changes. In this prototype the three V1 connectors are simulated; hit Sync to rehearse a fresh pull.</p>
+          <div class="source">
+            <span class="src-ic gmail"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-10 6L2 7"></path></svg></span>
+            <div><div class="s-name">Gmail <span class="dot" title="Simulated in this prototype"></span></div><div class="s-meta" data-sync-meta="">Simulated · last sync 12 min ago · 5 memories</div></div>
+            <button class="sync-btn" data-sync="Gmail">Sync</button>
+          </div>
+          <div class="source">
+            <span class="src-ic cal"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg></span>
+            <div><div class="s-name">Calendar <span class="dot" title="Simulated in this prototype"></span></div><div class="s-meta" data-sync-meta="">Simulated · last sync 4 min ago · 4 memories</div></div>
+            <button class="sync-btn" data-sync="Calendar">Sync</button>
+          </div>
+          <div class="source">
+            <span class="src-ic gh"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path><path d="M9 18c-4.51 2-5-2-7-2"></path></svg></span>
+            <div><div class="s-name">GitHub <span class="dot" title="Simulated in this prototype"></span></div><div class="s-meta" data-sync-meta="">Simulated · webhook design · 5 memories</div></div>
+            <button class="sync-btn" data-sync="GitHub">Sync</button>
+          </div>
+          <p class="form-note">V2 adds Drive, Slack, a browser extension, and notes. Depth beats breadth: three sources done well first.</p>
+        </div>
+
+        <div class="card">
+          <h3>Vault rules</h3>
+          <p class="card-sub">The conscience of the bank — enforced on every single call.</p>
+          <div class="principle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg><div><div class="p-t">No master keys</div><div class="p-d">Every token is scoped, expirable, and revocable. Agents never see the raw vault.</div></div></div>
+          <div class="principle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg><div><div class="p-t">Denial leaks nothing</div><div class="p-d">“Not permitted” and “doesn’t exist” return the identical response, so agents can’t probe for what’s hidden.</div></div></div>
+          <div class="principle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg><div><div class="p-t">Memories can fade</div><div class="p-d">Stale facts decay in ranking; conflicts surface to the owner, who is always the final arbiter.</div></div></div>
+          <div class="principle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg><div><div class="p-t">Patterns, not secrets</div><div class="p-d">Finance memories store the pattern (“card payment made”) — never account numbers or credentials.</div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GRANTS -->
+  <section id="grants">
+    <div class="sec-head"><span class="n">02</span><h2>Permission grants</h2></div>
+    <p class="sec-sub">This is the product. A grant says which agent may read which topics, at what depth, and until when. Sensitive topics always need a human tap; a grant can be killed instantly and the agent’s very next call fails.</p>
+
+    <div class="grant-grid">
+      <div class="card">
+        <h3>Create a grant</h3>
+        <p class="card-sub">In the full flow, the agent asks with a reason and this arrives as an approval ping on your phone: Approve · Deny · Once · Narrower.</p>
+        <div class="field">
+          <label for="g-name">Agent name</label>
+          <input type="text" id="g-name" placeholder="e.g. Startup Application Agent" value="Startup Application Agent">
+        </div>
+        <div class="field">
+          <label>Topic scope — tap to toggle</label>
+          <div class="scope-picks" id="scope-picks">
+            <button class="pick on" data-scope="Work">Work</button>
+            <button class="pick" data-scope="Finance">Finance</button>
+            <button class="pick" data-scope="Family">Family</button>
+            <button class="pick" data-scope="Health">Health</button>
+            <button class="pick on" data-scope="Ideas">Ideas</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="g-depth">Depth</label>
+          <select id="g-depth">
+            <option value="Summary">Summary — distilled facts only</option>
+            <option value="Verbatim">Verbatim — may quote source material</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="g-dur">Duration</label>
+          <select id="g-dur">
+            <option value="One-time">One-time — expires after a single query</option>
+            <option value="Session" selected="">Session — while the conversation runs</option>
+            <option value="30 days">30 days</option>
+            <option value="Permanent">Permanent — until revoked</option>
+          </select>
+        </div>
+        <button class="btn" id="g-create"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg> Issue grant</button>
+        <p class="form-note">Issuing a grant mints a scoped token (shown under the grant). It can never be widened later — a broader scope needs a new approval.</p>
+      </div>
+
+      <div>
+        <div id="grant-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AGENT PLAYGROUND -->
+  <section id="agent">
+    <div class="sec-head"><span class="n">03</span><h2>Test an agent against the vault</h2></div>
+    <p class="sec-sub">Pick an agent (that is, pick its grant), ask a question, and watch the gatekeeper work. Ask a Work-scoped agent about money or family and it gets exactly the same answer as if those memories didn’t exist.</p>
+
+    <div class="playground">
+      <h3>Agent console</h3>
+      <p class="pg-sub">The agent below is brand new — it knows nothing about Alex except what its grant lets it read, at the moment it asks.</p>
+      <div class="pg-controls">
+        <select id="pg-agent" aria-label="Choose which agent is asking"></select>
+      </div>
+      <div class="scope-shield" id="pg-shield"></div>
+      <div class="q-chips" style="margin-top:16px">
+        <button class="q-chip" data-q="Brief me: what should I know about Alex's work?">Brief me on his work</button>
+        <button class="q-chip" data-q="What do you know about his finances and spending?">Ask about finances</button>
+        <button class="q-chip" data-q="What's coming up for his family this week?">Ask about family</button>
+        <button class="q-chip" data-q="What startup ideas has he been working on?">Ask about his ideas</button>
+        <button class="q-chip" data-q="Any health appointments or notes?">Ask about health</button>
+      </div>
+      <div class="pg-ask">
+        <input type="text" id="pg-input" placeholder="Ask the vault anything about Alex…" aria-label="Ask the vault a question">
+        <button class="btn" id="pg-ask-btn">Ask via grant</button>
+      </div>
+      <div class="pg-result" id="pg-result" role="status"></div>
+    </div>
+  </section>
+
+  <!-- AUDIT -->
+  <section id="audit">
+    <div class="sec-head"><span class="n">04</span><h2>Audit log</h2></div>
+    <p class="sec-sub">Every grant, read, denial, sync, and revocation — visible to the owner, always. This is what turns “trust us” into “check for yourself.” Entries from your testing appear here live.</p>
+    <div class="card" style="padding:8px 18px">
+      <div class="audit-list" id="audit-list"></div>
+    </div>
+  </section>
+
+  <!-- API -->
+  <section id="api">
+    <div class="sec-head"><span class="n">05</span><h2>How agents connect</h2></div>
+    <p class="sec-sub">Two front doors, one permission engine. REST for everything; MCP so memory shows up as native tools inside agent frameworks. SDKs are thin wrappers over REST — convenience, not a third protocol. The project is being built in the open, intended for release under the MIT license.</p>
+    <div class="api-grid">
+      <div class="card">
+        <h3>REST API — v1 surface</h3>
+        <p class="card-sub">Every call carries a scoped token. The engine checks who, what topic, depth, expiry, and rate on each request.</p>
+        <div class="endpoint"><span class="method">POST</span><code>/v1/grants/request</code><span class="e-d">agent asks, with a reason</span></div>
+        <div class="endpoint"><span class="method post">POST</span><code>/v1/grants/:id/approve</code><span class="e-d">owner approves / narrows</span></div>
+        <div class="endpoint"><span class="method">GET</span><code>/v1/memories/query?q=…</code><span class="e-d">scoped retrieval</span></div>
+        <div class="endpoint"><span class="method">GET</span><code>/v1/memories/topics</code><span class="e-d">topics visible to this token</span></div>
+        <div class="endpoint"><span class="method del">DELETE</span><code>/v1/grants/:id</code><span class="e-d">revoke — effective instantly</span></div>
+        <div class="endpoint"><span class="method">GET</span><code>/v1/audit</code><span class="e-d">owner-only read history</span></div>
+      </div>
+      <div>
+        <div class="codeblock"><span class="cm">// MCP server — the same engine, as agent tools</span>
+{
+  <span class="kw">"tools"</span>: [
+    { <span class="kw">"name"</span>: <span class="st">"memory.query"</span>,
+      <span class="kw">"scope"</span>: <span class="st">"enforced per grant"</span> },
+    { <span class="kw">"name"</span>: <span class="st">"memory.topics"</span> },
+    { <span class="kw">"name"</span>: <span class="st">"memory.request_grant"</span>,
+      <span class="kw">"approval"</span>: <span class="st">"human tap required"</span> }
+  ]
+}
+
+<span class="cm">// A scoped query, as the agent sends it</span>
+GET /v1/memories/query?q=caching+decision
+Authorization: Bearer mb_live_…scoped…
+
+<span class="cm">// 200 — only Work memories, summaries only.
+// Out of scope returns the same empty result
+// as a topic with no memories at all.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section id="roadmap">
+    <div class="sec-head"><span class="n">06</span><h2>V1 → V5 — each version earns the next</h2></div>
+    <p class="sec-sub">No version starts until the previous one proves itself with real users. You’re looking at V1.</p>
+    <div class="road">
+      <div class="road-card current"><div class="rv">V1</div><div class="rt">Personal proof</div><div class="here">● You are here</div><ul><li>One user, one vault</li><li>Gmail, Calendar, GitHub</li><li>One scoped grant, one agent</li><li>Revoke button + audit log</li></ul></div>
+      <div class="road-card"><div class="rv">V2</div><div class="rt">Actually usable</div><ul><li>More sources: Drive, Slack, browser, notes</li><li>Phone approval pings</li><li>Weekly digest — correct or delete</li><li>Decay &amp; conflict surfacing</li><li>First 10–50 outside users</li></ul></div>
+      <div class="road-card"><div class="rv">V3</div><div class="rt">Teams — first revenue</div><ul><li>Shared team vaults</li><li>Role-based scoping</li><li>Admin dashboard</li><li>Jira, Confluence, Salesforce</li><li>New-hire week-one briefing</li></ul></div>
+      <div class="road-card"><div class="rv">V4</div><div class="rt">Enterprise</div><ul><li>Org-wide admin grant</li><li>SSO, SCIM, approval chains</li><li>SOC 2, retention, legal hold</li><li>Zero-knowledge &amp; BYO storage</li></ul></div>
+      <div class="road-card"><div class="rv">V5</div><div class="rt">The platform</div><ul><li>Agent directory &amp; standard</li><li>Agent-to-agent handoff with consent</li><li>Cross-vault portability</li><li>Proactive briefings</li></ul></div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="f-col"><b>Memory Bank — V1 prototype</b>An interactive proof of the core loop: continuous capture → distilled memories → scoped grants → gatekept answers → full audit. Demo data only; no real account is connected and nothing leaves this page.</div>
+    <div class="f-col"><b>Open source — status</b>Intended license: MIT. This prototype is a single self-contained HTML file — “view source” shows you all of it, nothing is hidden or minified. Publishing it to a GitHub repository is the pending next step: GitHub repo selection is still open, so no repo link exists yet and none is shown rather than faked. The engine is designed to be self-hostable — run it on your own hardware (a Raspberry Pi works). Planned repo layout: <code>vault/</code> <code>connectors/</code> <code>gatekeeper/</code> <code>mcp-server/</code></div>
+    <div class="f-col"><b>The test that matters</b>Will people connect a second agent — and revoke the first one’s grant? If yes, there’s a product. V1 exists to answer exactly that.</div>
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- Data: demo vault for sample user "Alex" ---------- */
+  var MEMORIES = [
+    {id:1, topic:"Work", type:"Fact", text:"Staff software engineer on a platform team; current focus is agentic AI tooling.", source:"Gmail", when:"Profile · updated Nov 2", conf:98},
+    {id:2, topic:"Work", type:"Episode", text:"Team chose a Redis-backed caching strategy — the decision and its reasoning were recorded in the PR discussion.", source:"GitHub", when:"PR discussion · Mon Nov 3", conf:94},
+    {id:3, topic:"Work", type:"Episode", text:"Merged the Postgres connection-pooling fix (PR #482) after two reviews.", source:"GitHub", when:"Commit · Tue Nov 4, 11:02 AM", conf:99},
+    {id:4, topic:"Work", type:"Episode", text:"A recruiter reached out about a principal platform role; replied asking for scope and comp band.", source:"Gmail", when:"Email · Tue Nov 4, 7:14 AM", conf:96},
+    {id:5, topic:"Work", type:"Preference", text:"Prefers short, bullet-point briefings over long messages.", source:"Gmail", when:"Pattern · from 12 threads", conf:91},
+    {id:6, topic:"Finance", type:"Episode", text:"Card payment posted; monthly spend tracking on pattern only — no account numbers stored.", source:"Gmail", when:"Bank alert · Tue Nov 4, 7:40 AM", conf:97},
+    {id:7, topic:"Finance", type:"Fact", text:"Mortgage statement for the month is ready; payment is the household's largest recurring item.", source:"Gmail", when:"Statement · Nov 1", conf:95},
+    {id:8, topic:"Family", type:"Episode", text:"Anniversary dinner booked for Friday, 7 PM — gift idea noted: a printed photo book.", source:"Calendar", when:"Event · Fri Nov 7", conf:99},
+    {id:9, topic:"Family", type:"Episode", text:"Weekend plan with parents added to the calendar — park visit Saturday morning with the family.", source:"Calendar", when:"Event · Sat Nov 8, 10 AM", conf:93},
+    {id:10, topic:"Family", type:"Fact", text:"Married, one young child; family time is protected in the evenings after dinner.", source:"Calendar", when:"Pattern · recurring blocks", conf:92},
+    {id:11, topic:"Health", type:"Episode", text:"Dentist appointment kept Tuesday at 4 PM; next cleaning in six months.", source:"Calendar", when:"Event · Tue Nov 4, 4 PM", conf:99},
+    {id:12, topic:"Health", type:"Preference", text:"Orders a light lunch on work-from-office days; tracks it as a habit, not a diet rule.", source:"Gmail", when:"Pattern · order receipts", conf:84},
+    {id:13, topic:"Ideas", type:"Episode", text:"Emailed himself a note: an idea for permissioned, portable memory that follows a person across AI agents.", source:"Gmail", when:"Self-email · Mon Nov 3, 10 PM", conf:95},
+    {id:14, topic:"Ideas", type:"Fact", text:"Studying distributed tracing and a new agent framework; saved three deep-dive docs this week.", source:"GitHub", when:"Stars & saves · this week", conf:90}
+  ];
+
+  var TOPICS = ["Work","Finance","Family","Health","Ideas"];
+
+  var grants = [
+    {id:"g1", name:"Job Application Agent", scopes:["Work"], depth:"Summary", dur:"Session", active:true, token:"mb_live_7f3a…w_scope:work"},
+    {id:"g2", name:"Family Assistant", scopes:["Family"], depth:"Summary", dur:"30 days", active:true, token:"mb_live_2b9c…f_scope:family"}
+  ];
+  var grantSeq = 3, readsCount = 0;
+
+  /* ---------- Helpers ---------- */
+  function $(s){ return document.querySelector(s); }
+  function $$(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function toast(msg){
+    var t = $("#toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove("show"); }, 3200);
+  }
+  var ICONS = {
+    read:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+    deny:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 9 6 6M15 9l-6 6"/></svg>',
+    grant:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m11 12 9.5-9.5"/><path d="M15.5 7.5 19 11"/></svg>',
+    revoke:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>',
+    sync:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg>',
+    src:'<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>'
+  };
+
+  /* ---------- Audit ---------- */
+  var auditEntries = [
+    {kind:"grant", html:"<b>Family Assistant</b> grant issued — Family scope, summary depth, 30 days", meta:"Approved by owner via phone tap", time:"Yesterday, 6:12 PM"},
+    {kind:"read", html:"<b>Job Application Agent</b> read 3 Work memories to draft an application summary", meta:"Grant: Session · Summary depth · 3 memories returned", time:"Yesterday, 9:41 AM"},
+    {kind:"deny", html:"<b>Job Application Agent</b> queried Finance — returned “no memories found”", meta:"Out of scope · denial indistinguishable from empty", time:"Yesterday, 9:40 AM"},
+    {kind:"sync", html:"<b>GitHub</b> webhook delivered a merged PR — distilled into 1 Work memory", meta:"Capture pipeline · deduplicated against email thread", time:"Tue, 11:03 AM"}
+  ];
+  function renderAudit(){
+    $("#audit-list").innerHTML = auditEntries.map(function(e){
+      var cls = e.kind==="deny" ? " deny" : (e.kind==="grant" ? " grant" : "");
+      return '<div class="audit-row"><span class="a-ic'+cls+'">'+(ICONS[e.kind]||ICONS.read)+'</span><div class="a-main"><div class="a-text">'+e.html+'</div><div class="a-meta">'+esc(e.meta)+'</div></div><span class="a-time">'+esc(e.time)+'</span></div>';
+    }).join("");
+  }
+  function addAudit(kind, html, meta){
+    auditEntries.unshift({kind:kind, html:html, meta:meta, time:"Just now"});
+    renderAudit();
+    saveState();
+  }
+
+  /* ---------- Persistence (localStorage) + JSON export ---------- */
+  var STORE_KEY = "memory-bank:v1:state";
+  function storage(){
+    try { var s = window.localStorage; s.setItem(STORE_KEY + ":probe", "1"); s.removeItem(STORE_KEY + ":probe"); return s; }
+    catch(e){ return null; } // sandboxed iframes and some private modes block storage
+  }
+  function saveState(){
+    var s = storage(); if(!s) return;
+    try { s.setItem(STORE_KEY, JSON.stringify({grants:grants, grantSeq:grantSeq, readsCount:readsCount, audit:auditEntries})); } catch(e){}
+  }
+  function loadState(){
+    var s = storage();
+    $("#persist-note").textContent = s ? "Saved in this browser (localStorage) — demo data only."
+                                       : "Browser storage is blocked here — changes last for this page view only.";
+    if(!s) return;
+    try {
+      var st = JSON.parse(s.getItem(STORE_KEY) || "null");
+      if(!st || !Array.isArray(st.grants) || !Array.isArray(st.audit)) return;
+      grants = st.grants;
+      auditEntries = st.audit.map(function(e){ return e.time === "Just now" ? Object.assign({}, e, {time:"Earlier visit"}) : e; });
+      grantSeq = st.grantSeq || grantSeq; readsCount = st.readsCount || 0;
+      $("#stat-reads").textContent = readsCount;
+    } catch(e){}
+  }
+  function plainText(html){
+    return new DOMParser().parseFromString("<body>"+html+"</body>", "text/html").body.textContent;
+  }
+  $("#vault-export").addEventListener("click", function(){
+    var data = {
+      app: "memory-bank", version: "v1", exported_at: new Date().toISOString(),
+      note: "Demo data for a fictional user (Alex). Grant tokens are never exported.",
+      memories: MEMORIES,
+      grants: grants.map(function(g){ return {id:g.id, agent:g.name, topics:g.scopes, depth:g.depth, duration:g.dur, active:g.active}; }),
+      audit: auditEntries.map(function(e){ return {kind:e.kind, event:plainText(e.html), meta:e.meta, time:e.time}; })
+    };
+    var url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type:"application/json"}));
+    var a = document.createElement("a"); a.href = url; a.download = "memory-bank-export.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    toast("Vault exported — " + MEMORIES.length + " memories, " + grants.length + " grants, " + auditEntries.length + " audit entries.");
+  });
+  $("#vault-reset").addEventListener("click", function(){
+    var s = storage(); if(s){ try { s.removeItem(STORE_KEY); } catch(e){} }
+    location.reload();
+  });
+
+  /* ---------- Memories ---------- */
+  var activeFilter = "all";
+  function renderMemories(){
+    var q = ($("#mem-search").value || "").toLowerCase().trim();
+    var shown = MEMORIES.filter(function(m){
+      var okTopic = activeFilter==="all" || m.topic===activeFilter;
+      var okQ = !q || (m.text+" "+m.topic+" "+m.source+" "+m.type).toLowerCase().indexOf(q) !== -1;
+      return okTopic && okQ;
+    });
+    $("#mem-list").innerHTML = shown.map(function(m){
+      return '<article class="mem"><div class="mem-top"><span class="pill '+m.topic.toLowerCase()+'">'+m.topic+'</span><span class="mem-type">'+m.type+'</span><span class="mem-conf">confidence '+m.conf+'%</span></div>'
+        + '<div class="mem-text">'+esc(m.text)+'</div>'
+        + '<div class="mem-meta"><span>'+ICONS.src+' via '+esc(m.source)+'</span><span>'+esc(m.when)+'</span><span>Source record linked, not copied</span></div></article>';
+    }).join("");
+    $("#mem-empty").style.display = shown.length ? "none" : "block";
+    $("#stat-mem").textContent = MEMORIES.length;
+  }
+  $$(".chip[data-filter]").forEach(function(ch){
+    ch.addEventListener("click", function(){
+      $$(".chip[data-filter]").forEach(function(c){ c.classList.remove("on"); });
+      ch.classList.add("on"); activeFilter = ch.getAttribute("data-filter"); renderMemories();
+    });
+  });
+  $("#mem-search").addEventListener("input", renderMemories);
+
+  /* ---------- Sync simulation ---------- */
+  $$("[data-sync]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var src = btn.getAttribute("data-sync");
+      btn.disabled = true; btn.textContent = "Syncing…";
+      setTimeout(function(){
+        btn.disabled = false; btn.textContent = "Sync";
+        var meta = btn.closest(".source").querySelector("[data-sync-meta]");
+        meta.textContent = meta.textContent.replace(/last sync[^·]*/, "last sync just now ");
+        addAudit("sync", "<b>"+esc(src)+"</b> sync completed — no new memories, vault already current", "Capture pipeline · change-subscription check");
+        toast(src + " is already up to date — nothing new to capture.");
+      }, 900);
+    });
+  });
+
+  /* ---------- Grants ---------- */
+  $$("#scope-picks .pick").forEach(function(p){
+    p.addEventListener("click", function(){ p.classList.toggle("on"); });
+  });
+  function renderGrants(){
+    $("#grant-list").innerHTML = grants.map(function(g){
+      var pills = g.scopes.map(function(s){ return '<span class="pill '+s.toLowerCase()+'">'+s+'</span>'; }).join("");
+      return '<div class="grant-card'+(g.active?"":" revoked")+'"><div class="grant-top"><span class="grant-name">'+esc(g.name)+'</span><span class="status'+(g.active?"":" off")+'">'+(g.active?"Active":"Revoked")+'</span>'
+        + (g.active ? '<button class="revoke-btn" data-revoke="'+g.id+'">Revoke</button>' : '')
+        + '</div><div class="grant-scopes">'+pills+'</div>'
+        + '<div class="grant-meta"><span>Depth <b>'+esc(g.depth)+'</b></span><span>Duration <b>'+esc(g.dur)+'</b></span><span>Reads are logged</span></div>'
+        + '<div class="token">token · '+esc(g.token)+'</div></div>';
+    }).join("");
+    $("#stat-grants").textContent = grants.filter(function(g){ return g.active; }).length;
+    $$("[data-revoke]").forEach(function(b){
+      b.addEventListener("click", function(){
+        var g = grants.filter(function(x){ return x.id===b.getAttribute("data-revoke"); })[0];
+        if(!g) return;
+        g.active = false;
+        addAudit("revoke", "<b>"+esc(g.name)+"</b> grant revoked by owner — token invalid immediately", "Scope was: "+g.scopes.join(", ")+" · "+g.depth+" · "+g.dur);
+        renderGrants(); renderAgentPicker();
+        toast("Grant revoked. " + g.name + " can no longer read anything.");
+      });
+    });
+  }
+  $("#g-create").addEventListener("click", function(){
+    var name = $("#g-name").value.trim() || "Unnamed Agent";
+    var scopes = $$("#scope-picks .pick.on").map(function(p){ return p.getAttribute("data-scope"); });
+    if(!scopes.length){ toast("Pick at least one topic scope first."); return; }
+    var g = { id:"g"+(grantSeq++), name:name, scopes:scopes, depth:$("#g-depth").value, dur:$("#g-dur").value, active:true,
+              token:"mb_live_"+Math.random().toString(16).slice(2,6)+"…x_scope:"+scopes.map(function(s){return s.toLowerCase();}).join("+") };
+    grants.unshift(g);
+    addAudit("grant", "<b>"+esc(name)+"</b> grant issued — "+scopes.join(", ")+" scope", "Depth: "+g.depth+" · Duration: "+g.dur+" · approved by owner");
+    renderGrants(); renderAgentPicker();
+    toast("Grant issued to " + name + " — try it in the agent console below.");
+    document.getElementById("agent").scrollIntoView({behavior:"smooth", block:"start"});
+  });
+
+  /* ---------- Agent playground ---------- */
+  function activeGrants(){ return grants.filter(function(g){ return g.active; }); }
+  function renderAgentPicker(){
+    var sel = $("#pg-agent");
+    var act = activeGrants();
+    if(!act.length){
+      sel.innerHTML = '<option value="">No active grants — every agent is locked out</option>';
+    } else {
+      sel.innerHTML = act.map(function(g){ return '<option value="'+g.id+'">'+esc(g.name)+' — grant: '+g.scopes.join(", ")+' ('+g.dur.toLowerCase()+')</option>'; }).join("");
+    }
+    renderShield();
+  }
+  function currentGrant(){
+    var id = $("#pg-agent").value;
+    return grants.filter(function(g){ return g.id===id; })[0] || null;
+  }
+  function renderShield(){
+    var g = currentGrant();
+    var html = '<span class="ss-lbl">This agent may read:</span>';
+    TOPICS.forEach(function(t){
+      var allow = g && g.scopes.indexOf(t) !== -1;
+      html += '<span class="ss'+(allow?" allow":"")+'">'+t+(allow?" ✓":" — locked")+'</span>';
+    });
+    if(!g) html += '<span class="ss-lbl">Issue a grant above to let any agent in.</span>';
+    $("#pg-shield").innerHTML = html;
+  }
+  $("#pg-agent").addEventListener("change", renderShield);
+
+  var TOPIC_KEYS = {
+    Finance:["financ","money","spend","bank","card","mortgage","payment","salary","budget","cost"],
+    Family:["family","wife","husband","kid","child","anniversary","parent","dinner","home"],
+    Health:["health","dentist","doctor","appointment","medical","lunch habit","diet"],
+    Ideas:["idea","startup","brainstorm","memo","studying","learning","tracing","framework"],
+    Work:["work","job","project","team","github","code","pr ","pull request","recruiter","career","engineer","caching","application"]
+  };
+  function detectTopics(q){
+    var found = [];
+    TOPICS.forEach(function(t){
+      var keys = TOPIC_KEYS[t];
+      for(var i=0;i<keys.length;i++){ if(q.indexOf(keys[i]) !== -1){ found.push(t); break; } }
+    });
+    return found;
+  }
+  function askVault(question){
+    var result = $("#pg-result");
+    var g = currentGrant();
+    var q = (question || "").toLowerCase();
+    if(!g){
+      result.className = "pg-result show";
+      result.innerHTML = '<div class="pg-verdict"><span class="verdict-dot no"></span>No active grant — the vault answered nothing</div>'
+        + '<div class="pg-answer">There is no agent with a valid token right now. In Memory Bank, no grant means no access — not reduced access, none. Issue a grant in section 02 and ask again.</div>';
+      addAudit("deny", "An agent query arrived with <b>no valid grant</b> — nothing returned", "Question: “"+esc(question)+"”");
+      return;
+    }
+    var asked = detectTopics(q);
+    if(!asked.length) asked = g.scopes.slice(); // generic question → answer from full permitted scope
+    var allowed = asked.filter(function(t){ return g.scopes.indexOf(t) !== -1; });
+    var blocked = asked.filter(function(t){ return g.scopes.indexOf(t) === -1; });
+    var mems = MEMORIES.filter(function(m){ return allowed.indexOf(m.topic) !== -1; });
+
+    readsCount++;
+    $("#stat-reads").textContent = readsCount;
+
+    if(!mems.length){
+      result.className = "pg-result show";
+      result.innerHTML = '<div class="pg-verdict"><span class="verdict-dot no"></span>'+esc(g.name)+' · grant: '+g.scopes.join(", ")+'</div>'
+        + '<div class="pg-answer">No memories found.</div>'
+        + '<div class="pg-blocked">That is the complete answer this agent receives. Whether the vault holds nothing on that topic, or the grant doesn’t cover it, is indistinguishable from the outside — by design.</div>';
+      if(blocked.length){
+        addAudit("deny", "<b>"+esc(g.name)+"</b> queried "+blocked.join(", ")+" — returned “no memories found”", "Out of scope for grant · Question: “"+esc(question)+"”");
+      } else {
+        addAudit("read", "<b>"+esc(g.name)+"</b> queried "+allowed.join(", ")+" — no matching memories", "Within scope · 0 memories returned");
+      }
+    } else {
+      var items = mems.map(function(m){ return "<li>"+esc(m.text)+"</li>"; }).join("");
+      var cites = mems.map(function(m){ return '<span class="cite">'+m.topic+' · via '+m.source+' · '+m.conf+'%</span>'; }).join("");
+      result.className = "pg-result show";
+      result.innerHTML = '<div class="pg-verdict"><span class="verdict-dot ok"></span>'+esc(g.name)+' · answered from '+mems.length+' permitted memor'+(mems.length===1?"y":"ies")+' ('+g.depth.toLowerCase()+' depth)</div>'
+        + '<div class="pg-answer">Here’s what the vault shared under this grant:<ul>'+items+'</ul></div>'
+        + '<div class="pg-cites"><div class="c-t">MEMORIES USED — PROVENANCE</div>'+cites+'</div>'
+        + (blocked.length ? '<div class="pg-blocked">Note for you, the owner (the agent never sees this): the question also touched '+blocked.join(", ")+', which this grant doesn’t cover — that part returned “no memories found.”</div>' : '');
+      addAudit("read", "<b>"+esc(g.name)+"</b> read "+mems.length+" "+allowed.join(", ")+" memories", "Grant: "+g.dur+" · "+g.depth+" depth · Question: “"+esc(question)+"”");
+      if(g.dur === "One-time"){
+        g.active = false;
+        addAudit("revoke", "<b>"+esc(g.name)+"</b> one-time grant auto-expired after its single query", "Token invalid · a second question will now fail");
+        renderGrants(); renderAgentPicker();
+        toast("One-time grant used up and auto-expired — exactly as designed.");
+      }
+    }
+    result.scrollIntoView({behavior:"smooth", block:"nearest"});
+  }
+  $$(".q-chip").forEach(function(c){
+    c.addEventListener("click", function(){
+      $("#pg-input").value = c.getAttribute("data-q");
+      askVault(c.getAttribute("data-q"));
+    });
+  });
+  $("#pg-ask-btn").addEventListener("click", function(){
+    var v = $("#pg-input").value.trim();
+    if(!v){ toast("Type a question first — or tap one of the preset questions."); return; }
+    askVault(v);
+  });
+  $("#pg-input").addEventListener("keydown", function(e){
+    if(e.key === "Enter"){ e.preventDefault(); $("#pg-ask-btn").click(); }
+  });
+
+  /* ---------- Init ---------- */
+  loadState();
+  renderMemories(); renderGrants(); renderAgentPicker(); renderAudit();
+})();
+</script>
+
+
+</body></html>
