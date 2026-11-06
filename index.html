@@ -313,6 +313,11 @@
   <section id="vault">
     <div class="sec-head"><span class="n">01</span><h2>The vault</h2></div>
     <p class="sec-sub">A day in Alex’s life, captured from three sources and distilled. Each memory carries its topic, type, source, and confidence — the raw email, event, or commit stays behind the link, not in the memory.</p>
+    <div class="filters" style="margin-top:-6px">
+      <button class="btn ghost small" id="vault-export" type="button">Export vault (JSON)</button>
+      <button class="btn ghost small" id="vault-reset" type="button">Reset demo</button>
+      <span class="sec-sub" id="persist-note" style="margin:0;font-size:13px"></span>
+    </div>
 
     <div class="grid-2">
       <div>
@@ -574,7 +579,54 @@ Authorization: Bearer mb_live_…scoped…
   function addAudit(kind, html, meta){
     auditEntries.unshift({kind:kind, html:html, meta:meta, time:"Just now"});
     renderAudit();
+    saveState();
   }
+
+  /* ---------- Persistence (localStorage) + JSON export ---------- */
+  var STORE_KEY = "memory-bank:v1:state";
+  function storage(){
+    try { var s = window.localStorage; s.setItem(STORE_KEY + ":probe", "1"); s.removeItem(STORE_KEY + ":probe"); return s; }
+    catch(e){ return null; } // sandboxed iframes and some private modes block storage
+  }
+  function saveState(){
+    var s = storage(); if(!s) return;
+    try { s.setItem(STORE_KEY, JSON.stringify({grants:grants, grantSeq:grantSeq, readsCount:readsCount, audit:auditEntries})); } catch(e){}
+  }
+  function loadState(){
+    var s = storage();
+    $("#persist-note").textContent = s ? "Saved in this browser (localStorage) — demo data only."
+                                       : "Browser storage is blocked here — changes last for this page view only.";
+    if(!s) return;
+    try {
+      var st = JSON.parse(s.getItem(STORE_KEY) || "null");
+      if(!st || !Array.isArray(st.grants) || !Array.isArray(st.audit)) return;
+      grants = st.grants;
+      auditEntries = st.audit.map(function(e){ return e.time === "Just now" ? Object.assign({}, e, {time:"Earlier visit"}) : e; });
+      grantSeq = st.grantSeq || grantSeq; readsCount = st.readsCount || 0;
+      $("#stat-reads").textContent = readsCount;
+    } catch(e){}
+  }
+  function plainText(html){
+    return new DOMParser().parseFromString("<body>"+html+"</body>", "text/html").body.textContent;
+  }
+  $("#vault-export").addEventListener("click", function(){
+    var data = {
+      app: "memory-bank", version: "v1", exported_at: new Date().toISOString(),
+      note: "Demo data for a fictional user (Alex). Grant tokens are never exported.",
+      memories: MEMORIES,
+      grants: grants.map(function(g){ return {id:g.id, agent:g.name, topics:g.scopes, depth:g.depth, duration:g.dur, active:g.active}; }),
+      audit: auditEntries.map(function(e){ return {kind:e.kind, event:plainText(e.html), meta:e.meta, time:e.time}; })
+    };
+    var url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type:"application/json"}));
+    var a = document.createElement("a"); a.href = url; a.download = "memory-bank-export.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    toast("Vault exported — " + MEMORIES.length + " memories, " + grants.length + " grants, " + auditEntries.length + " audit entries.");
+  });
+  $("#vault-reset").addEventListener("click", function(){
+    var s = storage(); if(s){ try { s.removeItem(STORE_KEY); } catch(e){} }
+    location.reload();
+  });
 
   /* ---------- Memories ---------- */
   var activeFilter = "all";
@@ -761,6 +813,7 @@ Authorization: Bearer mb_live_…scoped…
   });
 
   /* ---------- Init ---------- */
+  loadState();
   renderMemories(); renderGrants(); renderAgentPicker(); renderAudit();
 })();
 </script>
