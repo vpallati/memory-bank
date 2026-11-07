@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Memory Bank - Your vault</title>
+  <link rel="stylesheet" href="/src/vault.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Memory Bank</h1>
+      <p>Your private vault. <a href="/">Open the separate V1 fictional demo</a>.</p>
+    </header>
+    <p id="status" role="status" aria-live="polite">Connecting...</p>
+    <section id="auth" hidden>
+      <h2>Sign in</h2>
+      <p>Use your owner account. Agent grants are not supported by this owner interface.</p>
+      <form id="auth-form">
+        <label>Email <input id="email" type="email" autocomplete="username" required></label>
+        <label>Password <input id="password" type="password" autocomplete="current-password" minlength="12" required></label>
+        <div class="actions">
+          <button type="submit">Sign in</button>
+          <button id="signup" type="button">Create account</button>
+        </div>
+      </form>
+    </section>
+    <section id="vault" hidden>
+      <div class="actions">
+        <span id="account"></span>
+        <button id="signout" type="button">Sign out</button>
+        <button id="export" type="button">Export full vault (JSON)</button>
+      </div>
+      <h2 id="editor-title">Create memory</h2>
+      <p>Edits create a new revision. History is kept until you delete the memory and all its revisions.</p>
+      <form id="memory-form">
+        <label>Type
+          <select id="type">
+            <option value="fact">Fact</option>
+            <option value="episode">Episode</option>
+            <option value="preference">Preference</option>
+            <option value="idea">Idea</option>
+          </select>
+        </label>
+        <label>Topic <input id="topic" maxlength="100" required></label>
+        <label>Memory <textarea id="text" maxlength="20000" rows="4" required></textarea></label>
+        <label>Source / provenance <input id="source" maxlength="2000" required></label>
+        <label>Confidence (0-100%) <input id="confidence" type="number" min="0" max="100" step="1" value="100" required></label>
+        <div class="actions">
+          <button type="submit">Save memory</button>
+          <button id="cancel" type="button" hidden>Cancel edit</button>
+        </div>
+      </form>
+      <h2>Memories</h2>
+      <div class="actions">
+        <label><input id="history" type="checkbox"> Include revision history</label>
+        <button id="refresh" type="button">Refresh</button>
+      </div>
+      <div id="memories"></div>
+      <button id="more" type="button" hidden>Load more</button>
+    </section>
+  </main>
+  <script type="module" src="/src/vault.js"></script>
+</body>
+</html>

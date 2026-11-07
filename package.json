@@ -1,0 +1,35 @@
+{
+  "name": "memory-bank",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "dev:local": "node scripts/local-env.js dev",
+    "build": "vite build",
+    "build:local": "node scripts/local-env.js build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --test tests/*.test.js",
+    "test:integration": "node --test tests/integration/*.test.js",
+    "test:local": "node scripts/local-env.js test",
+    "db:start": "node scripts/local-db.js start",
+    "db:stop": "node scripts/local-db.js stop",
+    "db:reset": "node scripts/local-db.js reset",
+    "db:test": "node scripts/local-db.js test"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.119.0"
+  },
+  "devDependencies": {
+    "supabase": "2.76.8",
+    "vite": "7.3.7"
+  },
+  "overrides": {
+    "supabase": {
+      "tar": "7.5.22"
+    }
+  }
+}
