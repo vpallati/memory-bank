@@ -18,11 +18,11 @@
 | Sensitive scopes (finance, health, family) always need a human tap | #1, #5 |
 | One milestone at a time, one issue = one branch = one PR; Vishnu merges | #1 |
 | Demo data only (fictional "Alex") in code, tests, and demos | #2 |
+| M1 hosting: Supabase free tier (Postgres + Auth + RLS; Edge Functions available for later server endpoints). Pi self-host is not the M1 choice. | [Vishnu's decision on #3](https://github.com/vpallati/memory-bank/issues/3#issuecomment-6702030748) |
 
 ## Open — do not guess
 
 | Question | Options | Where to answer |
 |---|---|---|
-| Backend hosting | Supabase free tier (leading) · self-host on Pi | [#3](https://github.com/vpallati/memory-bank/issues/3) |
 | Approval-ping channel | web push · messaging | [#5](https://github.com/vpallati/memory-bank/issues/5) |
 | Repo layout | V2 in this repo on feature branches (default) · new V2 repo | [#1](https://github.com/vpallati/memory-bank/issues/1) |

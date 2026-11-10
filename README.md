@@ -13,6 +13,11 @@ capture → distilled memories → scoped grants → gatekept answers → full a
 
 V2 (real backend + real connectors for one person, daily) is tracked in [#1](https://github.com/vpallati/memory-bank/issues/1).
 
+**M1 owner vault implementation:** a separate [authenticated vault page](vault.html) uses Supabase
+Auth, Postgres, RLS, audited CRUD with revision history, and token-free JSON export.
+Hosting is Supabase free tier, as [confirmed on #3](https://github.com/vpallati/memory-bank/issues/3#issuecomment-6702030748).
+See [setup, deployment, tests, and limitations](docs/m1-backend.md). This does not connect the V1 demo to a backend.
+
 ## Run V1
 
 No build, no server, no dependencies.
@@ -45,6 +50,7 @@ No build, no server, no dependencies.
 - [V2 scope](docs/v2-scope.md)
 - [V2 architecture](docs/v2-architecture.md)
 - [Decisions](docs/decisions.md)
+- [M1 backend setup and verification](docs/m1-backend.md)
 
 ## License
 
