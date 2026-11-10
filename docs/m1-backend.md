@@ -90,10 +90,27 @@ Stop this project's containers with `npm run db:stop` when finished.
 5. Run `npm run build` **with those variables set**, then serve `dist` from an HTTPS static host on a free tier.
    `npm run preview` is a local smoke-test server, not a production server.
    A build without configuration intentionally shows an explicit configuration error on the owner page.
-6. Repeat the acceptance walkthrough using only synthetic hosted accounts, and remove those fixtures
-   afterward. Do not run the localhost-only bulk test against the hosted project.
+6. Run the hosted smoke test with one existing, confirmed, synthetic test account. Set these four variables
+   in your shell session only (never in a committed file):
+   `HOSTED_SUPABASE_URL`, `HOSTED_SUPABASE_ANON_KEY`, `HOSTED_TEST_EMAIL`, `HOSTED_TEST_PASSWORD`. Then:
 
-Deployment cannot be claimed complete until the hosted project and Auth settings have been supplied and verified.
+   ```powershell
+   npm run test:hosted
+   ```
+
+   Expected: 34 `PASS` lines and `ALL HOSTED CHECKS PASSED`. It checks anonymous denial on every table and
+   export (`42501`), sign-in/sign-out, create/read with provenance and confidence, denied direct table writes,
+   revisions and stale-edit rejection, V1-shaped token-free export, denied connector/token-hash/audit access,
+   deletion of the whole revision chain, and content-free deletion audit. It deletes its own fixture and leaves
+   pre-existing vault rows untouched; three content-free audit rows per run remain by design.
+   On a network with a TLS-inspecting proxy, Node may report `SELF_SIGNED_CERT_IN_CHAIN`; run
+   `node --use-system-ca scripts/hosted-smoke.js` to use the Windows trusted store. Never disable TLS checks.
+7. Repeat the browser acceptance walkthrough against the hosted build using only synthetic accounts.
+   Do not run the localhost-only bulk test against the hosted project.
+
+Hosted verification (Nov 10, 2026): migration applied to the free-tier project; `test:hosted` passed 34/34
+and the browser walkthrough passed with a synthetic account. Two-user isolation was verified on the local
+Supabase stack and in CI, and on the hosted project only from one account's view (no other user's rows visible).
 No project access or credentials are provisioned by this repository.
 
 ## Data contracts and boundaries

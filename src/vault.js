@@ -30,6 +30,7 @@ async function action(work) {
       invalid_credentials: "Email or password is incorrect.",
       email_not_confirmed: "Confirm your email before signing in.",
       over_email_send_rate_limit: "Too many email requests. Please wait before retrying.",
+      weak_password: "Password does not meet this project's password policy.",
     };
     status(messages[error?.code] ?? "The operation failed. Check your connection, session, and input, then retry.", true);
   } finally {
